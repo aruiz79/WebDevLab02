@@ -3,7 +3,9 @@
 
 import streamlit as st
 import pandas as pd
-import os # The 'os' module is used for file system operations (e.g. checking if a file exists).
+from pathlib import Path
+# Locate data.csv in the Lab02 folder
+CSV_PATH = Path(__file__).resolve().parent.parent / "data.csv"
 
 # PAGE CONFIGURATION
 st.set_page_config(
@@ -32,29 +34,36 @@ with st.form("survey_form"):
 
     # This block of code runs ONLY when the submit button is clicked.
     if submitted:
-        # --- YOUR LOGIC GOES HERE ---
-        # TO DO:
-        # 1. Create a new row of data from 'category_input' and 'value_input'.
-        # 2. Append this new row to the 'data.csv' file.
-        #    - You can use pandas or Python's built-in 'csv' module.
-        #    - Make sure to open the file in 'append' mode ('a').
-        #    - Don't forget to add a newline character '\n' at the end.
         ticker_clean = ticker_input.strip().upper()
-        
-        if not ticker_input:
+
+        if not ticker_clean:
             st.error("Please enter a stock ticker.")
         else:
             new_row = pd.DataFrame([{
                 "ticker": ticker_clean,
-            "sector": sector_input,
-            "predicted_return": prediction_input,
-            "conviction": conviction_input,
-        }])
-        new_row.to_csv("data.csv", mode="a", header=False, index=False)
+                "sector": sector_input,
+                "predicted_return": prediction_input,
+                "conviction": conviction_input,
+            }])
 
-          
-        st.success("Your data has been submitted!")
-        st.write(f"You entered: **ticker:** {ticker_clean}, **sector:** {sector_input}, **prediction** {prediction_input}, **conviction** {conviction_input}")
+            file_exists = (
+                CSV_PATH.exists() and CSV_PATH.stat().st_size > 0
+            )
+
+            new_row.to_csv(
+                CSV_PATH,
+                mode="a",
+                header=not file_exists,
+                index=False
+            )
+
+            st.success("Your data has been submitted!")
+            st.write(
+                f"You entered: **ticker:** {ticker_clean}, "
+                f"**sector:** {sector_input}, "
+                f"**prediction:** {prediction_input}, "
+                f"**conviction:** {conviction_input}"
+            )
 
 
 # DATA DISPLAY
@@ -63,10 +72,8 @@ st.divider() # Adds a horizontal line for visual separation.
 st.header("Current Data in CSV")
 
 # Check if the CSV file exists and is not empty before trying to read it.
-if os.path.exists('data.csv') and os.path.getsize('data.csv') > 0:
-    # Read the CSV file into a pandas DataFrame.
-    current_data_df = pd.read_csv('data.csv')
-    # Display the DataFrame as a table.
+if CSV_PATH.exists() and CSV_PATH.stat().st_size > 0:
+    current_data_df = pd.read_csv(CSV_PATH)
     st.dataframe(current_data_df)
 else:
     st.warning("The 'data.csv' file is empty or does not exist yet.")
