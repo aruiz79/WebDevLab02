@@ -2,11 +2,15 @@
 
 import streamlit as st
 import json
+from pathlib import Path
+
+data_path = Path(__file__).resolve().parent.parent / "data.json"
+
+with open(data_path, "r") as f:
+    data = json.load(f)
 import pandas as pd
 import plotly.express as px
 
-with open("data.json") as f:
-    data = json.load(f)
 
 df = pd.DataFrame(data["data_points"])
 # PAGE CONFIGURATION
